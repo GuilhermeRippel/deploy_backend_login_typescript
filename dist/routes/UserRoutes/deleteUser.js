@@ -14,27 +14,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
-const bcrypt_1 = __importDefault(require("bcrypt"));
 const Router = express_1.default.Router();
 const prisma = new client_1.PrismaClient();
-//Cadastro
-Router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = req.body;
-    const salt = yield bcrypt_1.default.genSalt(10);
-    const hashedPassword = yield bcrypt_1.default.hash(user.password, salt);
+Router.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const id = parseInt(req.params.id);
     try {
-        const response = yield prisma.user.create({
-            data: {
-                name: user.name,
-                email: user.email,
-                password: hashedPassword
+        const findUser = yield prisma.user.findUnique({
+            where: {
+                id: id
             }
         });
-        res.status(201).json({ message: `Usuário criado com sucesso!`, response });
+        if (!findUser) {
+            res.status(404).json("Usuário não encontrado");
+            return;
+        }
+        const userDelete = yield prisma.user.delete({
+            where: {
+                id: findUser === null || findUser === void 0 ? void 0 : findUser.id
+            }
+        });
+        res.status(200).json({ message: "Usuário deletado", userDelete });
     }
     catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Algo deu eerrado", err });
+        res.status(500).json({ message: "Erro ao deletar usuário", err });
     }
 }));
 exports.default = Router;

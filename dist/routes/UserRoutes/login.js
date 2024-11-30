@@ -15,26 +15,27 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const Router = express_1.default.Router();
+const loginRouter = express_1.default.Router();
 const prisma = new client_1.PrismaClient();
-//Cadastro
-Router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = req.body;
-    const salt = yield bcrypt_1.default.genSalt(10);
-    const hashedPassword = yield bcrypt_1.default.hash(user.password, salt);
+loginRouter.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
     try {
-        const response = yield prisma.user.create({
-            data: {
-                name: user.name,
-                email: user.email,
-                password: hashedPassword
-            }
+        const findUser = yield prisma.user.findUnique({
+            where: { email: email },
         });
-        res.status(201).json({ message: `Usuário criado com sucesso!`, response });
+        if (!findUser) {
+            res.status(401).json({ message: "Credenciais incorretas" });
+            return;
+        }
+        const isPasswordValid = yield bcrypt_1.default.compare(password, findUser.password);
+        if (!isPasswordValid) {
+            res.status(401).json({ message: "Credenciais incorretas" });
+            return;
+        }
+        res.status(200).json({ message: "Usuário encontrado, bem-vindo!" });
     }
     catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Algo deu eerrado", err });
+        res.status(500).json({ message: "Não foi possível logar", error: err });
     }
 }));
-exports.default = Router;
+exports.default = loginRouter;

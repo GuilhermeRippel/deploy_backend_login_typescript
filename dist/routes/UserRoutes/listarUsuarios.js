@@ -14,27 +14,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
-const bcrypt_1 = __importDefault(require("bcrypt"));
 const Router = express_1.default.Router();
 const prisma = new client_1.PrismaClient();
-//Cadastro
-Router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = req.body;
-    const salt = yield bcrypt_1.default.genSalt(10);
-    const hashedPassword = yield bcrypt_1.default.hash(user.password, salt);
+Router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const response = yield prisma.user.create({
-            data: {
-                name: user.name,
-                email: user.email,
-                password: hashedPassword
-            }
-        });
-        res.status(201).json({ message: `Usuário criado com sucesso!`, response });
+        const users = yield prisma.user.findMany();
+        console.log("usuarios", users);
+        res.status(200).json(users);
     }
     catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Algo deu eerrado", err });
+        console.error(err);
+        res.status(500).json({
+            message: "Erro ao listar usuários",
+            error: err,
+        });
     }
 }));
 exports.default = Router;
